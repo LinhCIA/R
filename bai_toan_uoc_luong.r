@@ -1,37 +1,44 @@
 """
-  Để biết được trung bình mức giá bán cao nhất của hãng giày Adidas tính bằng USD được đăng bán trên nền tảng StockX, chúng tôi đã chọn ngẫu nhiên 2000 mẫu và thấy trong đó có 537 người bán ở các mức giá như sau:
-      Mức giá bán (x)	20-175	176-350	351-525	526-700
-      Số lượng bán (f)	79	196	205	57
-	Với độ tin cậy 99%, hãy ước lượng mức giá trung bình của sản phẩm này? Biết rằng đây là biến ngẫu nhiên có phân phối chuẩn.
+	Bài toán ước lượng tỷ lệ: Để ước lượng số người bán giày mang thương hiệu Nike từ trước đến nay, 
+	chúng tôi đã lấy ra ngẫu nhiên mẫu 2000 người bán và lọc ra trong đó có 464 người bán giày Nike. 
+	Với độ tin cậy 95% hãy ước lượng tỉ lệ bán giày Nike trên nền tảng StockX.
 """
 
-# Giải bài toán trên
-# Tạo DataFrame mới với dữ liệu của hãng adidas
-adidas <- data[data$brand == "adidas", ]
-adidas
 
-# Tạo các khoảng giá
-price_range <- c(20, 175, 350, 525, 700)
+# Giải quyết bài toán
+#Tải thư viện "survey"
+install.packages("binom")
+library("dplyr")
+library(binom)
+setwd("D:/data/")
 
-# Sử dụng hàm cut để tạo cột "price_range"
-adidas$price_range <- cut(adidas$max_all_trade_range, breaks = price_range, labels = c("20-175", "176-350", "351-525", "526-700"))
+# Load dữ liệu
+data <- read.csv(file="stockx.csv", header=TRUE)
+set.seed(11)
 
-# Sử dụng hàm table để tạo bảng tần suất
-count <- table(adidas$brand, adidas$price_range)
-count
+# Hàm lấy mẫu
+lay_mau <- function(data) {
+  indices <- sample(1:nrow(data), 2000, replace = FALSE)
+  mau <- data[indices, ]
+  write_csv(mau, "D:/data/2000data_mau.csv", col_names = TRUE, append = FALSE)
+}
 
-# Chuẩn bị tập dữ liệu
-prices <- c(97.5, 262.5, 438.5, 613.5)
-frequencies <- c(79, 196, 205, 57)
+# Gọi hàm lấy mẫu
+lay_mau(data)
 
 
-# Tính khoảng tin cậy 99%
-# Tạo data frame từ dữ liệu
-data <- data.frame(x = rep(prices, frequencies))
+# Đọc mẫu thu thập được
+data <- read.csv(file="2000data.csv", header=TRUE)
 
-# Thực hiện t-test và ước lượng khoảng tin cậy
-result <- t.test(data$x, conf.level = 0.99)
-result
+# Các dữ liệu cần thiết
+# Số người bán Nike
+so_nguoi_ban_nike <- nrow(data %>% filter(brand=="Nike"))
+so_nguoi_ban_nike
 
-# In kết quả tính toán
-cat("Khoảng tin cậy 99% cho giá trung bình là: [", result$conf.int[1], ", ", result$conf.int[2], "]\n")
+#Số mẫu
+so_mau <- nrow(data)
+so_mau
+
+# Tiến hành ước lượng tỉ lệ
+khoang_tin_cay <- binom.confint(so_nguoi_ban_nike, so_mau, method = "wilson")
+khoang_tin_cay
